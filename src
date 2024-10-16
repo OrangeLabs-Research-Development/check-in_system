@@ -10,7 +10,7 @@ class EmployeeCheckin:
     def __init__(self, spreadsheet_id):
         self.SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
         self.SPREADSHEET_ID = spreadsheet_id
-        self.RANGE_NAME = 'Sheet1!A:C'  # Added column for reason
+        self.RANGE_NAME = 'Sheet1!A:C'  
         self.creds = None
 
     def authenticate(self):
