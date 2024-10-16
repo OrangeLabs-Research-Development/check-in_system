@@ -80,5 +80,8 @@ warehouse-checkin/
 4. Push to the branch
 5. Create a Pull Request
 
+## Customization
+If you need this customized to your buisness needs or would like to contribute feel free to reach by email: ravenmarketing@protonmail.com
+
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details
