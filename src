@@ -1,1 +1,88 @@
+import os
+from datetime import datetime
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+import pickle
 
+class EmployeeCheckin:
+    def __init__(self, spreadsheet_id):
+        self.SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+        self.SPREADSHEET_ID = spreadsheet_id
+        self.RANGE_NAME = 'Sheet1!A:C'  # Added column for reason
+        self.creds = None
+
+    def authenticate(self):
+        """Handle Google Sheets authentication"""
+        if os.path.exists('token.pickle'):
+            with open('token.pickle', 'rb') as token:
+                self.creds = pickle.load(token)
+        
+        if not self.creds or not self.creds.valid:
+            if self.creds and self.creds.expired and self.creds.refresh_token:
+                self.creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', self.SCOPES)
+                self.creds = flow.run_local_server(port=0)
+            
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(self.creds, token)
+
+        return build('sheets', 'v4', credentials=self.creds)
+
+    def check_in_employee(self, name, reason):
+        """Record employee check-in with reason"""
+        service = self.authenticate()
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        values = [
+            [timestamp, name, reason]
+        ]
+        
+        body = {
+            'values': values
+        }
+        
+        try:
+            service.spreadsheets().values().append(
+                spreadsheetId=self.SPREADSHEET_ID,
+                range=self.RANGE_NAME,
+                valueInputOption='USER_ENTERED',
+                body=body
+            ).execute()
+            return True, f"Check-in recorded for {name}"
+        except Exception as e:
+            return False, f"Error recording check-in: {str(e)}"
+
+def main():
+    # Replace with your Google Sheet ID
+    SPREADSHEET_ID = 'your_spreadsheet_id_here'
+    
+    # Initialize the check-in system
+    checkin_system = EmployeeCheckin(SPREADSHEET_ID)
+    
+    print("\nEmployee Check-in System")
+    print("Enter 'quit' to exit the system")
+    print("-" * 30)
+    
+    while True:
+        name = input("\nEnter Employee Name: ").strip()
+        
+        if name.lower() == 'quit':
+            print("\nClosing check-in system. Goodbye!")
+            break
+        
+        if name:
+            reason = input("Reason for Visit: ").strip()
+            if reason:
+                success, message = checkin_system.check_in_employee(name, reason)
+                print(message)
+            else:
+                print("Please enter a reason for visit")
+        else:
+            print("Please enter a valid name")
+
+if __name__ == '__main__':
+    main()
